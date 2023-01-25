@@ -3,7 +3,8 @@ syntax = "proto3";
 package helloworld;
 option go_package = "chapter1/example/helloworld";
 
-//  protoc --proto_path=. --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. helloworld.proto
+// protoc --proto_path=. --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. helloworld.proto
+// https://developers.google.com/protocol-buffers/docs/reference/go-generated?hl=zh-cn#package
 service GoMicro {
   rpc SayHello (HelloReq) returns (HelloRes) {}
 }
