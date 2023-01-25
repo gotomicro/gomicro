@@ -23,7 +23,8 @@ type GoMicro struct {
 
 // SayHello ...
 func (GoMicro) SayHello(ctx context.Context, request *helloworld.HelloReq) (*helloworld.HelloRes, error) {
+	log.Println("服务端收到信息：" + request.GetName())
 	return &helloworld.HelloRes{
-		Message: "Hello Go Micro Service",
+		Message: "我来自服务端",
 	}, nil
 }
