@@ -10,9 +10,9 @@ service GoMicro {
 }
 
 message HelloReq {
-  string name = 1;
+  string msg = 1;
 }
 
 message HelloRes {
-  string message = 1;
+  string msg = 1;
 }

@@ -6,6 +6,8 @@ import (
 
 	"gomicro/chapter2/example/helloworld"
 	"gomicro/chapter2/mygrpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -23,8 +25,14 @@ type GoMicro struct {
 
 // SayHello ...
 func (GoMicro) SayHello(ctx context.Context, request *helloworld.HelloReq) (*helloworld.HelloRes, error) {
-	log.Println("服务端收到信息：" + request.GetName())
+	log.Println("服务端收到信息：" + request.GetMsg())
+	if request.Msg == "panic" {
+		panic("i am panic")
+	}
+	if request.Msg == "internal" {
+		return nil, status.New(codes.DeadlineExceeded, "system error").Err()
+	}
 	return &helloworld.HelloRes{
-		Message: "我来自服务端",
+		Msg: "我来自服务端",
 	}, nil
 }

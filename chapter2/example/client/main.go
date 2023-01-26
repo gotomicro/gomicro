@@ -17,11 +17,11 @@ func main() {
 	}
 	client := helloworld.NewGoMicroClient(cc)
 	resp, err := client.SayHello(context.Background(), &helloworld.HelloReq{
-		Name: "我来自客户端",
+		Msg: "123",
 	})
 	if err != nil {
 		mygrpc.DefaultLogger.Info("请求错误：" + err.Error())
 		return
 	}
-	mygrpc.DefaultLogger.Info("客户端收到信息：" + resp.GetMessage())
+	mygrpc.DefaultLogger.Info("客户端收到信息：" + resp.GetMsg())
 }
