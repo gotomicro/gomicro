@@ -28,7 +28,7 @@ func (app *App) Start(address string) error {
 		return err
 	}
 	log.Println("服务启动监听：" + address)
-	app.hookSignals()
+	//app.hookSignals()
 	if err := app.Serve(lis); err != nil {
 		return err
 	}

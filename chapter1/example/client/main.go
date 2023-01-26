@@ -5,13 +5,13 @@ import (
 	"log"
 
 	"gomicro/chapter1/example/helloworld"
+	"gomicro/chapter1/mygrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
-
-	cc, err := grpc.DialContext(context.Background(), "127.0.0.1:9001", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, err := mygrpc.NewGRPCClient(context.Background(), "127.0.0.1:9001", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Panicln("连接错误: " + err.Error())
 	}
@@ -24,5 +24,4 @@ func main() {
 		return
 	}
 	log.Println("客户端收到信息：" + resp.GetMessage())
-
 }
