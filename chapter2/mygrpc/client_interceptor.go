@@ -23,7 +23,7 @@ func debugUnaryClientInterceptor(componentName string, target string) grpc.Unary
 		if err != nil {
 			log.Println("grpc.response", MakeReqAndResError(fileWithLineNum(), componentName, target, cost, method+" | "+fmt.Sprintf("%v", req), statusInfo.String(), ""))
 		} else {
-			log.Println("grpc.response", MakeReqAndResInfo(fileWithLineNum(), componentName, target, cost, method+" | "+fmt.Sprintf("%v", req), reply, statusInfo.String()))
+			log.Println("grpc.response", MakeReqAndResInfo(fileWithLineNum(), componentName, target, cost, method, fmt.Sprintf("%v", req), reply, statusInfo.String()))
 		}
 		return err
 	}

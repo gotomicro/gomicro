@@ -16,8 +16,8 @@ func MakeReqAndResError(line string, compName string, addr string, cost time.Dur
 }
 
 // MakeReqAndResInfo 以info级别打印行号、配置名、目标地址、耗时、请求数据、响应数据、错误码和信息
-func MakeReqAndResInfo(line string, compName string, addr string, cost time.Duration, req interface{}, reply interface{}, grpcStatus string) string {
-	return fmt.Sprintf("%s %s %s %s %s => %s", xcolor.Green(line), xcolor.Green(compName+"@"+addr), xcolor.Yellow(fmt.Sprintf("[%vms]", float64(cost.Microseconds())/1000)), xcolor.Blue(fmt.Sprintf("%v", req)), xcolor.Blue(fmt.Sprintf("%v", reply)), xcolor.Blue(grpcStatus))
+func MakeReqAndResInfo(line string, compName string, addr string, cost time.Duration, method string, req interface{}, reply interface{}, grpcStatus string) string {
+	return fmt.Sprintf("%s %s %s %s & %s => %s & %s", xcolor.Green(line), xcolor.Yellow(fmt.Sprintf("[%vms]", float64(cost.Microseconds())/1000)), xcolor.Green(compName+"@"+addr), xcolor.Blue(method), xcolor.Blue(fmt.Sprintf("%v", req)), xcolor.Green(fmt.Sprintf("%v", reply)), xcolor.Blue(grpcStatus))
 }
 
 func fileWithLineNum() string {

@@ -54,7 +54,7 @@ func defaultUnaryServerInterceptor(componentName string) grpc.UnaryServerInterce
 			if err != nil {
 				log.Println("grpc.request", MakeReqAndResError(fileWithLineNum(), componentName, getPeerAddr(ctx), cost, info.FullMethod+" | "+fmt.Sprintf("%v", reqMap), statusInfo.String(), string(stack)))
 			} else {
-				log.Println("grpc.request", MakeReqAndResInfo(fileWithLineNum(), componentName, getPeerAddr(ctx), cost, info.FullMethod+" | "+fmt.Sprintf("%v", reqMap), resMap, statusInfo.String()))
+				log.Println("grpc.request", MakeReqAndResInfo(fileWithLineNum(), componentName, getPeerAddr(ctx), cost, info.FullMethod, fmt.Sprintf("%v", reqMap), resMap, statusInfo.String()))
 			}
 		}()
 		return handler(ctx, req)
