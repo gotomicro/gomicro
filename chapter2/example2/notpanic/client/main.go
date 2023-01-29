@@ -12,7 +12,8 @@ import (
 
 func main() {
 	router := gin.Default()
-	cc, err := mygrpc.NewGRPCClient(context.Background(), "passthrough:///127.0.0.1:9001", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	clientGrpc := &mygrpc.ClientComponent{}
+	cc, err := clientGrpc.NewGRPCClient(context.Background(), "passthrough:///127.0.0.1:9100", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		mygrpc.DefaultLogger.Panic("连接错误: " + err.Error())
 	}

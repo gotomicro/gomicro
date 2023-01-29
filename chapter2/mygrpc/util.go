@@ -11,13 +11,13 @@ import (
 )
 
 // MakeReqAndResError 以error级别打印行号、配置名、目标地址、耗时、请求数据、响应数据、错误码和信息
-func MakeReqAndResError(line string, compName string, addr string, cost time.Duration, method string, req string, grpcStatus string, stack string) string {
-	return fmt.Sprintf("%s %s %s %s & %s => %s \n%s", xcolor.Green(line), xcolor.Red(compName+"@"+addr), xcolor.Yellow(fmt.Sprintf("[%vms]", float64(cost.Microseconds())/1000)), xcolor.Blue(fmt.Sprintf("%v", method)), xcolor.Blue(fmt.Sprintf("%v", req)), xcolor.Red(grpcStatus), xcolor.Red(stack))
+func MakeReqAndResError(line string, compName string, addr string, cost time.Duration, method string, req string, res string, grpcStatus string, stack string) string {
+	return fmt.Sprintf("%s %s %s %s & %s => %s & %s \n%s", xcolor.Green(line), xcolor.Red(compName+"@"+addr), xcolor.Yellow(fmt.Sprintf("[%vms]", float64(cost.Microseconds())/1000)), xcolor.Blue(fmt.Sprintf("%v", method)), xcolor.Blue(fmt.Sprintf("%v", req)), xcolor.Blue(fmt.Sprintf("%v", res)), xcolor.Red(grpcStatus), xcolor.Red(stack))
 }
 
 // MakeReqAndResInfo 以info级别打印行号、配置名、目标地址、耗时、请求数据、响应数据、错误码和信息
 func MakeReqAndResInfo(line string, compName string, addr string, cost time.Duration, method string, req interface{}, reply interface{}, grpcStatus string) string {
-	return fmt.Sprintf("%s %s %s %s & %s => %s & %s", xcolor.Green(line), xcolor.Yellow(fmt.Sprintf("[%vms]", float64(cost.Microseconds())/1000)), xcolor.Green(compName+"@"+addr), xcolor.Blue(method), xcolor.Blue(fmt.Sprintf("%v", req)), xcolor.Green(fmt.Sprintf("%v", reply)), xcolor.Blue(grpcStatus))
+	return fmt.Sprintf("%s %s %s %s & %s => %s & %s", xcolor.Green(line), xcolor.Yellow(fmt.Sprintf("[%vms]", float64(cost.Microseconds())/1000)), xcolor.Green(compName+"@"+addr), xcolor.Blue(method), xcolor.Blue(fmt.Sprintf("%v", req)), xcolor.Blue(fmt.Sprintf("%v", reply)), xcolor.Green(grpcStatus))
 }
 
 func fileWithLineNum() string {

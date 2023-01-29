@@ -22,9 +22,12 @@ func debugUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		var p peer.Peer
 		// 响应的头信息
 		var resHeader metadata.MD
+		// 响应的尾信息
+		var resTrailer metadata.MD
 		// 请求的头信息
 		reqHeader, _ := metadata.FromOutgoingContext(ctx)
 		opts = append(opts, grpc.Header(&resHeader))
+		opts = append(opts, grpc.Trailer(&resTrailer))
 		opts = append(opts, grpc.Peer(&p))
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		// 将err信息转换为grpc的status信息
@@ -35,13 +38,16 @@ func debugUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 			"metadata": reqHeader,
 		}
 		var resMap = map[string]any{
-			"payload":  xstring.JSON(reply),
-			"metadata": resHeader,
+			"payload": xstring.JSON(reply),
+			"metadata": map[string]any{
+				"header":  resHeader,
+				"trailer": resTrailer,
+			},
 		}
 		// 记录此次调用grpc的耗时
 		cost := time.Since(beg)
 		if err != nil {
-			log.Println("grpc.response", MakeReqAndResError(fileWithLineNum(), componentName, p.Addr.String(), cost, method, fmt.Sprintf("%v", reqMap), statusInfo.String(), ""))
+			log.Println("grpc.response", MakeReqAndResError(fileWithLineNum(), componentName, p.Addr.String(), cost, method, fmt.Sprintf("%v", reqMap), fmt.Sprintf("%v", resMap), statusInfo.String(), ""))
 		} else {
 			log.Println("grpc.response", MakeReqAndResInfo(fileWithLineNum(), componentName, p.Addr.String(), cost, method, fmt.Sprintf("%v", reqMap), resMap, statusInfo.String()))
 		}

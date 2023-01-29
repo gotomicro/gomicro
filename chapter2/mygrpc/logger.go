@@ -1,6 +1,9 @@
 package mygrpc
 
 import (
+	"fmt"
+	"runtime"
+
 	"github.com/gotomicro/ego/core/util/xcolor"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -53,4 +56,20 @@ func debugEncodeLevel(lv zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 	default:
 	}
 	enc.AppendString(colorize(lv.CapitalString()))
+}
+
+func LoggerPanic(msg string, fields ...zap.Field) {
+	enc := zapcore.NewMapObjectEncoder()
+	for _, field := range fields {
+		field.AddTo(enc)
+	}
+	fmt.Printf("%s: \n    %s: %s\n", xcolor.Red("panic"), xcolor.Red("msg"), msg)
+	if _, file, line, ok := runtime.Caller(3); ok {
+		fmt.Printf("    %s: %s:%d\n", xcolor.Red("loc"), file, line)
+	}
+	for key, val := range enc.Fields {
+		fmt.Printf("    %s: %s\n", xcolor.Red(key), fmt.Sprintf("%+v", val))
+	}
+	msg = fmt.Sprintf("%-32s", msg)
+	panic(msg)
 }

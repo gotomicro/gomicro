@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"gomicro/chapter2/example/helloworld"
 	"gomicro/chapter2/mygrpc"
+	"gomicro/helloworld"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
