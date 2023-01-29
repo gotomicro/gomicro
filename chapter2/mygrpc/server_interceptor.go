@@ -15,11 +15,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func defaultUnaryServerInterceptor(componentName string) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res interface{}, err error) {
+func defaultUnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	componentName := "grpcServer"
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (res any, err error) {
 		var beg = time.Now()
-		// 为了性能考虑，如果要加日志字段，需要改变slice大小
-
 		// 此处必须使用defer来recover handler内部可能出现的panic
 		defer func() {
 			stack := make([]byte, 4096)
@@ -33,8 +32,6 @@ func defaultUnaryServerInterceptor(componentName string) grpc.UnaryServerInterce
 				}
 
 				stack = stack[:runtime.Stack(stack, true)]
-				//fields = append(fields, elog.FieldStack(stack))
-				//event = "recover"
 			}
 
 			var reqMap = map[string]interface{}{
@@ -47,12 +44,9 @@ func defaultUnaryServerInterceptor(componentName string) grpc.UnaryServerInterce
 			var resMap = map[string]interface{}{
 				"payload": xstring.JSON(res),
 			}
-			if md, ok := metadata.FromOutgoingContext(ctx); ok {
-				resMap["metadata"] = md
-			}
 			statusInfo, _ := status.FromError(err)
 			if err != nil {
-				log.Println("grpc.request", MakeReqAndResError(fileWithLineNum(), componentName, getPeerAddr(ctx), cost, info.FullMethod+" | "+fmt.Sprintf("%v", reqMap), statusInfo.String(), string(stack)))
+				log.Println("grpc.request", MakeReqAndResError(fileWithLineNum(), componentName, getPeerAddr(ctx), cost, info.FullMethod, fmt.Sprintf("%v", reqMap), statusInfo.String(), string(stack)))
 			} else {
 				log.Println("grpc.request", MakeReqAndResInfo(fileWithLineNum(), componentName, getPeerAddr(ctx), cost, info.FullMethod, fmt.Sprintf("%v", reqMap), resMap, statusInfo.String()))
 			}

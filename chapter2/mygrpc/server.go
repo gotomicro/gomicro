@@ -19,7 +19,7 @@ func NewApp() *App {
 	var app App
 	// grpc框架日志，因为官方grpc日志是单例，所以这里要处理下
 	grpclog.SetLoggerV2(zapgrpc.NewLogger(grpcLogger))
-	app.Server = grpc.NewServer(grpc.ChainUnaryInterceptor(defaultUnaryServerInterceptor("grpcServer")))
+	app.Server = grpc.NewServer(grpc.ChainUnaryInterceptor(defaultUnaryServerInterceptor()))
 	return &app
 }
 
