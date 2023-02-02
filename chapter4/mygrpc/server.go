@@ -3,6 +3,7 @@ package mygrpc
 import (
 	"net"
 
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapgrpc"
 
 	"google.golang.org/grpc"
@@ -11,6 +12,7 @@ import (
 
 type App struct {
 	*grpc.Server
+	logger *zap.Logger
 }
 
 func NewApp() *App {
