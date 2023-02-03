@@ -12,40 +12,23 @@ import (
 	"google.golang.org/grpc/resolver"
 )
 
-//func RegisterResolver() {
-//	resolver.Register(&Resolver{})
-//}
-
-type Resolver struct {
+type etcdResolver struct {
 	cli *clientv3.Client
 }
 
-//NewResolver create a resolver for grpc
-func NewResolver(cli *clientv3.Client) *Resolver {
-	return &Resolver{
+//newResolver create a resolver for grpc
+func newResolver(cli *clientv3.Client) *etcdResolver {
+	return &etcdResolver{
 		cli: cli,
 	}
 }
 
-func (r *Resolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
-	go r.watch(cc, target.URL.Path)
-	return r, nil
-}
-
-func (r *Resolver) Scheme() string {
-	return "etcd"
-}
-
 // ResolveNow ...
-func (r *Resolver) ResolveNow(rn resolver.ResolveNowOptions) {
-}
+func (r *etcdResolver) ResolveNow(rn resolver.ResolveNowOptions) {}
 
-// close closes the resolver.
-func (r *Resolver) Close() {
+func (r *etcdResolver) Close() {}
 
-}
-
-func (r *Resolver) watch(cc resolver.ClientConn, serviceName string) {
+func (r *etcdResolver) watch(cc resolver.ClientConn, serviceName string) {
 	target := fmt.Sprintf("%s/", serviceName)
 	for {
 		resolverObj := NewAddressList()

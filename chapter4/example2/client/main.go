@@ -24,7 +24,7 @@ func main() {
 	if err != nil {
 		mygrpc.DefaultLogger.Panic("创建etcd失败", zap.Error(err))
 	}
-	resolver.Register(etcdv3.NewResolveBuilder(clientCon))
+	resolver.Register(etcdv3.newResolver(clientCon))
 	clientGrpc := &mygrpc.ClientComponent{
 		BalancerName: "round_robin",
 	}
