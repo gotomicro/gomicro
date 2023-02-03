@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapgrpc"
+	"gomicro/chapter4/mygrpc/governor"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
@@ -16,9 +17,10 @@ import (
 
 type App struct {
 	*grpc.Server
-	sigChan chan os.Signal
-	logger  *zap.Logger
-	opts    ServerOption
+	governor *governor.Component
+	sigChan  chan os.Signal
+	logger   *zap.Logger
+	opts     ServerOption
 }
 
 func NewApp(opts ...ServerOptions) *App {
@@ -28,6 +30,7 @@ func NewApp(opts ...ServerOptions) *App {
 	for _, apply := range opts {
 		apply(&app.opts)
 	}
+	app.governor = governor.NewComponent("0.0.0.0:9003", DefaultLogger)
 	// grpc框架日志，因为官方grpc日志是单例，所以这里要处理下
 	grpclog.SetLoggerV2(zapgrpc.NewLogger(grpcLogger))
 	app.Server = grpc.NewServer(grpc.ChainUnaryInterceptor(defaultUnaryServerInterceptor()))
@@ -35,6 +38,7 @@ func NewApp(opts ...ServerOptions) *App {
 }
 
 func (app *App) Start(address string) error {
+	go app.governor.Start()
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		return err
@@ -73,6 +77,7 @@ func (app *App) gracefulStop() {
 	}
 	app.logger.Info("Receive Signal gracefulStop")
 	app.GracefulStop()
+	app.governor.GracefulStop(context.Background())
 }
 
 func (app *App) stop() {
@@ -87,6 +92,8 @@ func (app *App) stop() {
 	app.logger.Info("Receive Signal stop")
 
 	app.Stop()
+	app.governor.Stop()
+
 }
 
 func (app *App) hookSignals() {

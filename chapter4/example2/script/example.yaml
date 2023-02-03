@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "9"
+    field.cattle.io/publicEndpoints: '[{"addresses":["120.46.216.101","192.168.79.188"],"port":443,"protocol":"HTTPS","serviceName":"default:mns-be","ingressName":"default:infra","hostname":"infra-dev.shimo.run","path":"/mns/api","allNodes":false},{"addresses":["120.46.216.101","192.168.79.188"],"port":443,"protocol":"HTTPS","serviceName":"default:mns-be","ingressName":"default:infra","hostname":"infra-dev.shimo.run","path":"/api/admin/oa/token","allNodes":false}]'
+    field.mops.io/aid: "23"
+    field.mops.io/appName: mns-be
+    field.mops.io/envId: "1"
+    field.mops.io/updatedAt: "2023-01-13T14:45:24+08:00"
+    field.mops.io/workloadId: "2893"
+    field.mops.io/workloadKind: Deployment
+    field.mops.io/workloadName: mns-be
+    field.mops.io/zoneId: "2"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"creationTimestamp":null,"name":"mns-be","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"mns-be","enable":"true","version":"dev"}},"strategy":{},"template":{"metadata":{"annotations":{"cattle.io/timestamp":"2022-10-24T10:32:33Z","mops-info":"{\"aid\":23,\"eid\":1,\"zid\":2,\"cid\":10,\"ns\":\"default\",\"id\":2893,\"type\":1,\"kind\":\"Deployment\",\"name\":\"mns-be\",\"mame\":\"mns-be\"}","prometheus.io/port":"9003","prometheus.io/scrape":"true"},"creationTimestamp":null,"labels":{"app":"mns-be","enable":"true","mops-app":"mns-be","version":"dev"}},"spec":{"containers":[{"env":[{"name":"EGO_LOG_EXTRA_KEYS","value":"X-Shimo-User-Id,X-Admin-Uid,requestid"},{"name":"MO_MODE","value":"release"},{"name":"NODE_ENV","value":"production"},{"name":"aliyun_logs_rawlogs_project","value":"shimo-devlog"},{"name":"aliyun_logs_rawlogs_machinegro","value":"shimo_dev"},{"name":"EGO_CONFIG_PATH","value":"config/dev.toml"},{"name":"GO_ENV","value":"production"},{"name":"aliyun_logs_rawlogs","value":"stdout"}],"envFrom":[{"configMapRef":{"name":"global-configuration"}}],"image":"reg.smvm.cn/cicd/shimo-saas/mns-be:9365e5b0","imagePullPolicy":"Always","name":"mns-be","ports":[{"containerPort":50051,"protocol":"TCP"},{"containerPort":9001,"protocol":"TCP"},{"containerPort":9003,"protocol":"TCP"}],"resources":{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}},"volumeMounts":[{"mountPath":"/usr/local/games","name":"core-path"},{"mountPath":"/data/config","name":"config-volume-mns-be"}]}],"imagePullSecrets":[{"name":"regsecret"}],"nodeSelector":{"beta.kubernetes.io/os":"linux"},"volumes":[{"name":"core-path"},{"name":"config-volume-mns-be","projected":{"sources":[{"configMap":{"name":"dev-mns-be"}}]}}]}}},"status":{}}
+  creationTimestamp: "2022-10-24T09:45:39Z"
+  generation: 10
+  name: mns-be
+  namespace: default
+  resourceVersion: "65799922"
+  uid: 72c2cf9d-896f-47fb-833f-f39a3a0ce64e
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: mns-be
+      enable: "true"
+      version: dev
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cattle.io/timestamp: "2022-10-24T10:32:33Z"
+        field.mops.io/aid: "23"
+        field.mops.io/appName: mns-be
+        field.mops.io/envId: "1"
+        field.mops.io/updatedAt: "2023-01-13T14:45:24+08:00"
+        field.mops.io/workloadId: "2893"
+        field.mops.io/workloadKind: Deployment
+        field.mops.io/workloadName: mns-be
+        field.mops.io/zoneId: "2"
+        mops-info: '{"aid":23,"eid":1,"zid":2,"cid":10,"ns":"default","id":2893,"type":1,"kind":"Deployment","name":"mns-be","mame":"mns-be"}'
+        prometheus.io/port: "9003"
+        prometheus.io/scrape: "true"
+      creationTimestamp: null
+      labels:
+        app: mns-be
+        enable: "true"
+        mops-app: mns-be
+        version: dev
+    spec:
+      containers:
+        - env:
+            - name: GO_ENV
+              value: production
+            - name: EGO_DEBUG
+              value: "true"
+            - name: EGO_CONFIG_PATH
+              value: config/dev.toml
+            - name: NODE_ENV
+              value: production
+            - name: aliyun_logs_rawlogs
+              value: stdout
+            - name: EGO_LOG_EXTRA_KEYS
+              value: X-Shimo-User-Id,X-Admin-Uid,requestid
+            - name: aliyun_logs_rawlogs_project
+              value: shimo-devlog
+            - name: aliyun_logs_rawlogs_machinegro
+              value: shimo_dev
+            - name: MO_MODE
+              value: dev
+          envFrom:
+            - configMapRef:
+                name: global-configuration
+          image: reg.smvm.cn/cicd/shimo-saas/mns-be:9365e5b0
+          imagePullPolicy: Always
+          name: mns-be
+          ports:
+            - containerPort: 50051
+              protocol: TCP
+            - containerPort: 9001
+              protocol: TCP
+            - containerPort: 9003
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /usr/local/games
+              name: core-path
+            - mountPath: /data/config
+              name: config-volume-mns-be
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+        - name: regsecret
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - emptyDir: {}
+          name: core-path
+        - name: config-volume-mns-be
+          projected:
+            defaultMode: 420
+            sources:
+              - configMap:
+                  name: dev-mns-be
+status:
+  availableReplicas: 1
+  conditions:
+    - lastTransitionTime: "2022-10-24T10:36:02Z"
+      lastUpdateTime: "2022-10-24T10:36:02Z"
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: "True"
+      type: Available
+    - lastTransitionTime: "2022-10-24T09:45:39Z"
+      lastUpdateTime: "2023-01-13T06:45:28Z"
+      message: ReplicaSet "mns-be-67c994f787" has successfully progressed.
+      reason: NewReplicaSetAvailable
+      status: "True"
+      type: Progressing
+  observedGeneration: 10
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1
