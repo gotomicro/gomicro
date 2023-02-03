@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"gomicro/chapter2/mygrpc"
+	"gomicro/chapter4/mygrpc"
 	"gomicro/config"
 	"gomicro/helloworld"
 	"google.golang.org/grpc"

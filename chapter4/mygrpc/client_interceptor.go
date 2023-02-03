@@ -46,10 +46,16 @@ func debugUnaryClientInterceptor() grpc.UnaryClientInterceptor {
 		}
 		// 记录此次调用grpc的耗时
 		cost := time.Since(beg)
-		if err != nil {
-			log.Println("grpc.response", MakeReqAndResError(fileWithLineNum(), componentName, p.Addr.String(), cost, method, fmt.Sprintf("%v", reqMap), fmt.Sprintf("%v", resMap), statusInfo.String(), ""))
+		var addr string
+		if p.Addr != nil {
+			addr = p.Addr.String()
 		} else {
-			log.Println("grpc.response", MakeReqAndResInfo(fileWithLineNum(), componentName, p.Addr.String(), cost, method, fmt.Sprintf("%v", reqMap), resMap, statusInfo.String()))
+			addr = cc.Target()
+		}
+		if err != nil {
+			log.Println("grpc.response", MakeReqAndResError(fileWithLineNum(), componentName, addr, cost, method, fmt.Sprintf("%v", reqMap), fmt.Sprintf("%v", resMap), statusInfo.String(), ""))
+		} else {
+			log.Println("grpc.response", MakeReqAndResInfo(fileWithLineNum(), componentName, addr, cost, method, fmt.Sprintf("%v", reqMap), resMap, statusInfo.String()))
 		}
 		return err
 	}
