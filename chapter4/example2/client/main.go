@@ -31,14 +31,14 @@ func main() {
 	clientGrpc := &mygrpc.ClientComponent{
 		BalancerName: "round_robin",
 	}
-	cc, _ := clientGrpc.NewGRPCClient(context.Background(), "k8s:///mns-be.default:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cc, _ := clientGrpc.NewGRPCClient(context.Background(), "k8s:///test-p2cserver.default:9001", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	client := helloworld.NewGoMicroClient(cc)
 	// 设置请求头信息
 	headers := metadata.Pairs("clientName", "microClient")
 	ctx := metadata.NewOutgoingContext(context.Background(), headers)
 	for {
 		forRequest(ctx, client)
-		time.Sleep(1 * time.Second)
+		time.Sleep(50 * time.Millisecond)
 	}
 
 }
@@ -52,5 +52,12 @@ func forRequest(ctx context.Context, client helloworld.GoMicroClient) {
 		return
 	}
 	mygrpc.DefaultLogger.Info("客户端收到信息：" + resp.GetMsg())
-
+	resp2, err2 := client.SayList(ctx, &helloworld.ListReq{
+		Msg: "hello",
+	})
+	if err2 != nil {
+		mygrpc.DefaultLogger.Info("请求错误：" + err.Error())
+		return
+	}
+	mygrpc.DefaultLogger.Info("客户端收到信息：" + resp2.GetMsg())
 }

@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: p2cserver
+  name: test-p2cserver
   namespace: default
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: p2cserver
+      app: test-p2cserver
   template:
     metadata:
       labels:
-        app: p2cserver
+        app: test-p2cserver
       annotations:
-        field.mops.io/appName: p2cserver
+        field.mops.io/appName: test-p2cserver
         prometheus.io/port: "9003"
         prometheus.io/scrape: "true"        
     spec:
@@ -23,9 +23,9 @@ spec:
               value: config/dev.toml
             - name: EGO_LOG_WRITER
               value: stderr
-          image: reg.smvm.cn/test/p2cserver:0.1
+          image: reg.smvm.cn/cicd/shimo-saas/p2cserver:0.16
           imagePullPolicy: Always
-          name: p2cserver
+          name: test-p2cserver
           ports:
             - containerPort: 9001
               name: 9001tcp
@@ -39,22 +39,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: p2cserver
+  name: test-p2cserver
   namespace: default
 spec:
   ports:
-    - name: p2cserver-9002-9002
+    - name: test-p2cserver-9002-9002
       port: 9002
       protocol: TCP
       targetPort: 9002
-    - name: p2cserver-9001-9001
+    - name: test-p2cserver-9001-9001
       port: 9001
       protocol: TCP
       targetPort: 9001
-    - name: p2cserver-9003-9003
+    - name: test-p2cserver-9003-9003
       port: 9003
       protocol: TCP
       targetPort: 9003
   selector:
-    app: p2cserver
+    app: test-p2cserver
   type: ClusterIP

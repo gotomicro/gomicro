@@ -3,11 +3,10 @@
 package helloworld
 
 import (
-	"context"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	context "context"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,6 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GoMicroClient interface {
 	SayHello(ctx context.Context, in *HelloReq, opts ...grpc.CallOption) (*HelloRes, error)
+	SayList(ctx context.Context, in *ListReq, opts ...grpc.CallOption) (*ListRes, error)
 }
 
 type goMicroClient struct {
@@ -39,11 +39,21 @@ func (c *goMicroClient) SayHello(ctx context.Context, in *HelloReq, opts ...grpc
 	return out, nil
 }
 
+func (c *goMicroClient) SayList(ctx context.Context, in *ListReq, opts ...grpc.CallOption) (*ListRes, error) {
+	out := new(ListRes)
+	err := c.cc.Invoke(ctx, "/helloworld.GoMicro/SayList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoMicroServer is the server API for GoMicro service.
 // All implementations must embed UnimplementedGoMicroServer
 // for forward compatibility
 type GoMicroServer interface {
 	SayHello(context.Context, *HelloReq) (*HelloRes, error)
+	SayList(context.Context, *ListReq) (*ListRes, error)
 	mustEmbedUnimplementedGoMicroServer()
 }
 
@@ -53,6 +63,9 @@ type UnimplementedGoMicroServer struct {
 
 func (UnimplementedGoMicroServer) SayHello(context.Context, *HelloReq) (*HelloRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
+}
+func (UnimplementedGoMicroServer) SayList(context.Context, *ListReq) (*ListRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SayList not implemented")
 }
 func (UnimplementedGoMicroServer) mustEmbedUnimplementedGoMicroServer() {}
 
@@ -85,6 +98,24 @@ func _GoMicro_SayHello_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoMicro_SayList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoMicroServer).SayList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/helloworld.GoMicro/SayList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoMicroServer).SayList(ctx, req.(*ListReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoMicro_ServiceDesc is the grpc.ServiceDesc for GoMicro service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -95,6 +126,10 @@ var GoMicro_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SayHello",
 			Handler:    _GoMicro_SayHello_Handler,
+		},
+		{
+			MethodName: "SayList",
+			Handler:    _GoMicro_SayList_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

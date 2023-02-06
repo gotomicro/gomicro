@@ -8,4 +8,4 @@ ENV APP=${APP}
 ENV WORKDIR=/data
 COPY bin ${WORKDIR}/
 WORKDIR ${WORKDIR}
-CMD ["sh", "-c", "./${APP}"]
+CMD ["./p2cserver"]

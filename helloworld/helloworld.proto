@@ -7,6 +7,7 @@ option go_package = "chapter2/example/helloworld";
 // https://developers.google.com/protocol-buffers/docs/reference/go-generated?hl=zh-cn#package
 service GoMicro {
   rpc SayHello (HelloReq) returns (HelloRes) {}
+  rpc SayList (ListReq) returns (ListRes) {}
 }
 
 message HelloReq {
@@ -14,5 +15,13 @@ message HelloReq {
 }
 
 message HelloRes {
+  string msg = 1;
+}
+
+message ListReq {
+  string msg = 1;
+}
+
+message ListRes {
   string msg = 1;
 }

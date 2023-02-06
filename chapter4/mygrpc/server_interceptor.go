@@ -6,9 +6,12 @@ import (
 	"log"
 	"net"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/gotomicro/ego/core/util/xstring"
+	"go.uber.org/zap"
+	"gomicro/chapter4/mygrpc/xcpu"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
@@ -51,6 +54,17 @@ func defaultUnaryServerInterceptor() grpc.UnaryServerInterceptor {
 				log.Println("grpc.request", MakeReqAndResInfo(fileWithLineNum(), componentName, getPeerAddr(ctx), cost, info.FullMethod, fmt.Sprintf("%v", reqMap), resMap, statusInfo.String()))
 			}
 		}()
+
+		var stat = xcpu.Stat{}
+		xcpu.ReadStat(&stat)
+		if stat.Usage > 0 {
+			// https://github.com/grpc/grpc-go/blob/master/Documentation/grpc-metadata.md
+			header := metadata.Pairs("cpu-usage", strconv.Itoa(int(stat.Usage)))
+			err = grpc.SetHeader(ctx, header)
+			if err != nil {
+				DefaultLogger.Error("set header error", zap.Error(err))
+			}
+		}
 		return handler(ctx, req)
 	}
 }

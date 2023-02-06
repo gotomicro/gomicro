@@ -37,9 +37,9 @@ func NewApp(opts ...ServerOptions) *App {
 	return &app
 }
 
-func (app *App) Start(address string) error {
+func (app *App) Start() error {
 	go app.governor.Start()
-	lis, err := net.Listen("tcp", address)
+	lis, err := net.Listen("tcp", app.opts.address)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (app *App) Start(address string) error {
 	}
 	app.hookSignals()
 
-	DefaultLogger.Info("服务启动监听：" + address)
+	DefaultLogger.Info("服务启动监听：" + app.opts.address)
 	if err := app.Serve(lis); err != nil {
 		return err
 	}
