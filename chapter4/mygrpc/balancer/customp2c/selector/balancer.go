@@ -18,10 +18,10 @@ type BalancerBuilder interface {
 
 // WeightedNode calculates scheduling weight in real time
 type WeightedNode interface {
-	Node
+	//Node
 
 	// Raw returns the original node
-	Raw() Node
+	Raw() *GrpcNode
 
 	// Weight is the runtime calculated weight
 	Weight() float64
@@ -35,7 +35,7 @@ type WeightedNode interface {
 
 // WeightedNodeBuilder is WeightedNode Builder
 type WeightedNodeBuilder interface {
-	Build(Node) WeightedNode
+	Build(*GrpcNode) WeightedNode
 }
 
 // DoneFunc is callback function when RPC invoke done.
@@ -52,29 +52,6 @@ type DoneInfo struct {
 	BytesSent bool
 	// BytesReceived indicates if any byte has been received from the server.
 	BytesReceived bool
-}
-
-// Node is node interface.
-type Node interface {
-	// Scheme is service node scheme
-	Scheme() string
-
-	// Address is the unique address under the same service
-	Address() string
-
-	// ServiceName is service name
-	ServiceName() string
-
-	// InitialWeight is the initial value of scheduling weight
-	// if not set return nil
-	InitialWeight() *int64
-
-	// Version is service node version
-	Version() string
-
-	// Metadata is the kv pair metadata associated with the service instance.
-	// version,namespace,region,protocol etc..
-	Metadata() map[string]string
 }
 
 // ReplyMD is Reply Metadata.

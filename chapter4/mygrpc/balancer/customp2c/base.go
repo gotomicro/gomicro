@@ -23,11 +23,6 @@ func init() {
 	balancer.Register(newBuilder())
 }
 
-type grpcNode struct {
-	selector.Node
-	subConn balancer.SubConn
-}
-
 type p2cPickerBuilder struct{}
 
 func (b *p2cPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
@@ -36,12 +31,10 @@ func (b *p2cPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
 	}
 
-	nodes := make([]selector.Node, 0, len(info.ReadySCs))
-	for conn, info := range info.ReadySCs {
-		ins, _ := info.Address.Attributes.Value("rawServiceInstance").(*selector.ServiceInstance)
-		nodes = append(nodes, &grpcNode{
-			Node:    selector.NewNode("grpc", info.Address.Addr, ins),
-			subConn: conn,
+	nodes := make([]*selector.GrpcNode, 0, len(info.ReadySCs))
+	for conn, _ := range info.ReadySCs {
+		nodes = append(nodes, &selector.GrpcNode{
+			SubConn: conn,
 		})
 	}
 
@@ -63,7 +56,7 @@ type balancerPicker struct {
 	picked      int64
 }
 
-func (p *balancerPicker) Apply(nodes []selector.Node) {
+func (p *balancerPicker) Apply(nodes []*selector.GrpcNode) {
 	weightedNodes := make([]selector.WeightedNode, 0, len(nodes))
 	for _, n := range nodes {
 		weightedNodes = append(weightedNodes, p.NodeBuilder.Build(n))
@@ -75,7 +68,7 @@ func (p *balancerPicker) Apply(nodes []selector.Node) {
 // Pick instances.
 func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	var (
-		selected   selector.Node
+		selected   *selector.GrpcNode
 		done       selector.DoneFunc
 		candidates []selector.WeightedNode
 	)
@@ -93,7 +86,7 @@ func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, erro
 		done = nodes[0].Pick()
 		selected = nodes[0].Raw()
 		return balancer.PickResult{
-			SubConn: selected.(*grpcNode).subConn,
+			SubConn: selected.SubConn,
 			Done: func(di balancer.DoneInfo) {
 				done(info.Ctx, selector.DoneInfo{
 					Err:           di.Err,
@@ -124,7 +117,7 @@ func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, erro
 	selected = pc.Raw()
 
 	return balancer.PickResult{
-		SubConn: selected.(*grpcNode).subConn,
+		SubConn: selected.SubConn,
 		Done: func(di balancer.DoneInfo) {
 			done(info.Ctx, selector.DoneInfo{
 				Err:           di.Err,

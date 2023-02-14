@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gomicro/chapter4/mygrpc/balancer/kratosp2c/selector"
+	"gomicro/chapter4/mygrpc/balancer/customp2c/selector"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -27,8 +27,7 @@ var (
 
 // Node is endpoint instance
 type Node struct {
-	selector.Node
-
+	Node *selector.GrpcNode
 	// client statistic data
 	lag       int64
 	success   uint64
@@ -53,7 +52,7 @@ type Builder struct {
 }
 
 // Build create a weighted node.
-func (b *Builder) Build(n selector.Node) selector.WeightedNode {
+func (b *Builder) Build(n *selector.GrpcNode) selector.WeightedNode {
 	s := &Node{
 		Node:       n,
 		lag:        0,
@@ -183,7 +182,7 @@ func (n *Node) PickElapsed() time.Duration {
 	return time.Duration(time.Now().UnixNano() - atomic.LoadInt64(&n.lastPick))
 }
 
-func (n *Node) Raw() selector.Node {
+func (n *Node) Raw() *selector.GrpcNode {
 	return n.Node
 }
 
