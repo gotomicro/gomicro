@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gomicro/chapter4/mygrpc/balancer/customp2c/selector"
+	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,20 +20,13 @@ const (
 	penalty = uint64(time.Second * 10)
 )
 
-var (
-	_ selector.WeightedNode        = (*Node)(nil)
-	_ selector.WeightedNodeBuilder = (*Builder)(nil)
-)
-
 // Node is endpoint instance
 type Node struct {
-	Node *selector.GrpcNode
-	// client statistic data
+	SubConn   balancer.SubConn
 	lag       int64
 	success   uint64
 	inflight  int64
 	inflights *list.List
-	// last collected timestamp
 	stamp     int64
 	predictTs int64
 	predict   int64
@@ -52,9 +45,9 @@ type Builder struct {
 }
 
 // Build create a weighted node.
-func (b *Builder) Build(n *selector.GrpcNode) selector.WeightedNode {
+func (b *Builder) Build(n balancer.SubConn) *Node {
 	s := &Node{
-		Node:       n,
+		SubConn:    n,
 		lag:        0,
 		success:    1000,
 		inflight:   1,
@@ -117,7 +110,7 @@ func (n *Node) load() (load uint64) {
 }
 
 // Pick pick a node.
-func (n *Node) Pick() selector.DoneFunc {
+func (n *Node) Pick() func(ctx context.Context, di balancer.DoneInfo) {
 	now := time.Now().UnixNano()
 	atomic.StoreInt64(&n.lastPick, now)
 	atomic.AddInt64(&n.inflight, 1)
@@ -125,7 +118,7 @@ func (n *Node) Pick() selector.DoneFunc {
 	n.lk.Lock()
 	e := n.inflights.PushBack(now)
 	n.lk.Unlock()
-	return func(ctx context.Context, di selector.DoneInfo) {
+	return func(ctx context.Context, di balancer.DoneInfo) {
 		n.lk.Lock()
 		n.inflights.Remove(e)
 		n.lk.Unlock()
@@ -182,8 +175,8 @@ func (n *Node) PickElapsed() time.Duration {
 	return time.Duration(time.Now().UnixNano() - atomic.LoadInt64(&n.lastPick))
 }
 
-func (n *Node) Raw() *selector.GrpcNode {
-	return n.Node
+func (n *Node) GetSubConn() balancer.SubConn {
+	return n.SubConn
 }
 
 // Acceptable checks if given error is acceptable.

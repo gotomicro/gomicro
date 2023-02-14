@@ -1,16 +1,16 @@
 package kratosp2c
 
 import (
+	"context"
+	"fmt"
 	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"gomicro/chapter4/mygrpc/balancer/customp2c/ewma"
-	"gomicro/chapter4/mygrpc/balancer/customp2c/selector"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
-	"google.golang.org/grpc/metadata"
 )
 
 const (
@@ -18,6 +18,9 @@ const (
 	// Name is balancer name
 	Name = "custom_p2c"
 )
+
+// ErrNoAvailable is no available node.
+var ErrNoAvailable = fmt.Errorf("no_available_node")
 
 func init() {
 	balancer.Register(newBuilder())
@@ -31,18 +34,17 @@ func (b *p2cPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 		return base.NewErrPicker(balancer.ErrNoSubConnAvailable)
 	}
 
-	nodes := make([]*selector.GrpcNode, 0, len(info.ReadySCs))
-	for conn, _ := range info.ReadySCs {
-		nodes = append(nodes, &selector.GrpcNode{
-			SubConn: conn,
-		})
-	}
-
 	p := &balancerPicker{
 		r:           rand.New(rand.NewSource(time.Now().UnixNano())),
 		NodeBuilder: &ewma.Builder{},
 	}
-	p.Apply(nodes)
+
+	weightedNodes := make([]*ewma.Node, 0, len(info.ReadySCs))
+	for conn, _ := range info.ReadySCs {
+		weightedNodes = append(weightedNodes, p.NodeBuilder.Build(conn))
+	}
+	// TODO: Do not delete unchanged nodes
+	p.nodes.Store(weightedNodes)
 	return p
 
 }
@@ -56,49 +58,33 @@ type balancerPicker struct {
 	picked      int64
 }
 
-func (p *balancerPicker) Apply(nodes []*selector.GrpcNode) {
-	weightedNodes := make([]selector.WeightedNode, 0, len(nodes))
-	for _, n := range nodes {
-		weightedNodes = append(weightedNodes, p.NodeBuilder.Build(n))
-	}
-	// TODO: Do not delete unchanged nodes
-	p.nodes.Store(weightedNodes)
-}
-
 // Pick instances.
 func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	var (
-		selected   *selector.GrpcNode
-		done       selector.DoneFunc
-		candidates []selector.WeightedNode
+		done       func(ctx context.Context, di balancer.DoneInfo)
+		candidates []*ewma.Node
 	)
 
-	nodes, ok := p.nodes.Load().([]selector.WeightedNode)
+	nodes, ok := p.nodes.Load().([]*ewma.Node)
 	if !ok {
-		return balancer.PickResult{}, selector.ErrNoAvailable
+		return balancer.PickResult{}, ErrNoAvailable
 	}
 	candidates = nodes
 	if len(candidates) == 0 {
-		return balancer.PickResult{}, selector.ErrNoAvailable
+		return balancer.PickResult{}, ErrNoAvailable
 	}
 
 	if len(candidates) == 1 {
 		done = nodes[0].Pick()
-		selected = nodes[0].Raw()
 		return balancer.PickResult{
-			SubConn: selected.SubConn,
+			SubConn: nodes[0].GetSubConn(),
 			Done: func(di balancer.DoneInfo) {
-				done(info.Ctx, selector.DoneInfo{
-					Err:           di.Err,
-					BytesSent:     di.BytesSent,
-					BytesReceived: di.BytesReceived,
-					ReplyMD:       Trailer(di.Trailer),
-				})
+				done(info.Ctx, di)
 			},
 		}, nil
 	}
 
-	var pc, upc selector.WeightedNode
+	var pc, upc *ewma.Node
 	nodeA, nodeB := p.prePick(nodes)
 	// meta.Weight is the weight set by the service publisher in discovery
 	if nodeB.Weight() > nodeA.Weight() {
@@ -114,23 +100,17 @@ func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, erro
 		atomic.StoreInt64(&p.picked, 0)
 	}
 	done = pc.Pick()
-	selected = pc.Raw()
 
 	return balancer.PickResult{
-		SubConn: selected.SubConn,
+		SubConn: pc.GetSubConn(),
 		Done: func(di balancer.DoneInfo) {
-			done(info.Ctx, selector.DoneInfo{
-				Err:           di.Err,
-				BytesSent:     di.BytesSent,
-				BytesReceived: di.BytesReceived,
-				ReplyMD:       Trailer(di.Trailer),
-			})
+			done(info.Ctx, di)
 		},
 	}, nil
 }
 
 // choose two distinct nodes.
-func (p *balancerPicker) prePick(nodes []selector.WeightedNode) (nodeA selector.WeightedNode, nodeB selector.WeightedNode) {
+func (p *balancerPicker) prePick(nodes []*ewma.Node) (nodeA *ewma.Node, nodeB *ewma.Node) {
 	p.mu.Lock()
 	a := p.r.Intn(len(nodes))
 	b := p.r.Intn(len(nodes) - 1)
@@ -144,16 +124,4 @@ func (p *balancerPicker) prePick(nodes []selector.WeightedNode) (nodeA selector.
 
 func newBuilder() balancer.Builder {
 	return base.NewBalancerBuilder(Name, new(p2cPickerBuilder), base.Config{HealthCheck: true})
-}
-
-// Trailer is a grpc trailer MD.
-type Trailer metadata.MD
-
-// Get get a grpc trailer value.
-func (t Trailer) Get(k string) string {
-	v := metadata.MD(t).Get(k)
-	if len(v) > 0 {
-		return v[0]
-	}
-	return ""
 }
