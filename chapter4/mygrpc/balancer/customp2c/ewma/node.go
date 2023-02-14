@@ -22,7 +22,7 @@ const (
 
 // Node is endpoint instance
 type Node struct {
-	SubConn   balancer.SubConn
+	subConn   balancer.SubConn
 	lag       int64
 	success   uint64
 	inflight  int64
@@ -35,24 +35,18 @@ type Node struct {
 	// last lastPick timestamp
 	lastPick int64
 
-	errHandler func(err error) (isErr bool)
-	lk         sync.RWMutex
-}
-
-// Builder is ewma node builder.
-type Builder struct {
-	ErrHandler func(err error) (isErr bool)
+	//errHandler func(err error) (isErr bool)
+	lk sync.RWMutex
 }
 
 // Build create a weighted node.
-func (b *Builder) Build(n balancer.SubConn) *Node {
+func Build(n balancer.SubConn) *Node {
 	s := &Node{
-		SubConn:    n,
-		lag:        0,
-		success:    1000,
-		inflight:   1,
-		inflights:  list.New(),
-		errHandler: b.ErrHandler,
+		subConn:   n,
+		lag:       0,
+		success:   1000,
+		inflight:  1,
+		inflights: list.New(),
 	}
 	return s
 }
@@ -147,9 +141,9 @@ func (n *Node) Pick() func(ctx context.Context, di balancer.DoneInfo) {
 
 		success := uint64(1000) // error value ,if error set 1
 		if di.Err != nil {
-			if n.errHandler != nil && n.errHandler(di.Err) {
-				success = 0
-			}
+			//if n.errHandler != nil && n.errHandler(di.Err) {
+			//	success = 0
+			//}
 			//var netErr net.Error
 			//if errors.Is(context.DeadlineExceeded, di.Err) || errors.Is(context.Canceled, di.Err) ||
 			//	errors.IsServiceUnavailable(di.Err) || errors.IsGatewayTimeout(di.Err) || errors.As(di.Err, &netErr) {
@@ -176,7 +170,7 @@ func (n *Node) PickElapsed() time.Duration {
 }
 
 func (n *Node) GetSubConn() balancer.SubConn {
-	return n.SubConn
+	return n.subConn
 }
 
 // Acceptable checks if given error is acceptable.

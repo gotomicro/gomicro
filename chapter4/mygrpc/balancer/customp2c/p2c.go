@@ -35,49 +35,40 @@ func (b *p2cPickerBuilder) Build(info base.PickerBuildInfo) balancer.Picker {
 	}
 
 	p := &balancerPicker{
-		r:           rand.New(rand.NewSource(time.Now().UnixNano())),
-		NodeBuilder: &ewma.Builder{},
+		r: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 
 	weightedNodes := make([]*ewma.Node, 0, len(info.ReadySCs))
 	for conn, _ := range info.ReadySCs {
-		weightedNodes = append(weightedNodes, p.NodeBuilder.Build(conn))
+		weightedNodes = append(weightedNodes, ewma.Build(conn))
 	}
-	// TODO: Do not delete unchanged nodes
-	p.nodes.Store(weightedNodes)
+	p.weightedNodes = weightedNodes
 	return p
 
 }
 
 // balancerPicker is a grpc picker.
 type balancerPicker struct {
-	nodes       atomic.Value
-	NodeBuilder *ewma.Builder
-	mu          sync.Mutex
-	r           *rand.Rand
-	picked      int64
+	nodes         atomic.Value
+	mu            sync.Mutex
+	r             *rand.Rand
+	picked        int64
+	weightedNodes []*ewma.Node
 }
 
 // Pick instances.
 func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	var (
-		done       func(ctx context.Context, di balancer.DoneInfo)
-		candidates []*ewma.Node
+		done func(ctx context.Context, di balancer.DoneInfo)
 	)
-
-	nodes, ok := p.nodes.Load().([]*ewma.Node)
-	if !ok {
-		return balancer.PickResult{}, ErrNoAvailable
-	}
-	candidates = nodes
-	if len(candidates) == 0 {
+	if len(p.weightedNodes) == 0 {
 		return balancer.PickResult{}, ErrNoAvailable
 	}
 
-	if len(candidates) == 1 {
-		done = nodes[0].Pick()
+	if len(p.weightedNodes) == 1 {
+		done = p.weightedNodes[0].Pick()
 		return balancer.PickResult{
-			SubConn: nodes[0].GetSubConn(),
+			SubConn: p.weightedNodes[0].GetSubConn(),
 			Done: func(di balancer.DoneInfo) {
 				done(info.Ctx, di)
 			},
@@ -85,7 +76,7 @@ func (p *balancerPicker) Pick(info balancer.PickInfo) (balancer.PickResult, erro
 	}
 
 	var pc, upc *ewma.Node
-	nodeA, nodeB := p.prePick(nodes)
+	nodeA, nodeB := p.prePick(p.weightedNodes)
 	// meta.Weight is the weight set by the service publisher in discovery
 	if nodeB.Weight() > nodeA.Weight() {
 		pc, upc = nodeB, nodeA
