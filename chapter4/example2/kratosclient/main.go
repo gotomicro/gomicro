@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 	"gomicro/chapter4/mygrpc"
+	_ "gomicro/chapter4/mygrpc/balancer/kratosp2c"
 	"gomicro/chapter4/mygrpc/resolver/k8s"
 	"gomicro/helloworld"
 	"google.golang.org/grpc"
@@ -29,7 +30,7 @@ func main() {
 	}
 	resolver.Register(k8s.NewResolveBuilder(clientSet))
 	clientGrpc := &mygrpc.ClientComponent{
-		BalancerName: "round_robin",
+		BalancerName: "kratos_p2c",
 	}
 	cc, _ := clientGrpc.NewGRPCClient(context.Background(), "k8s:///test-p2cserver.default:9001", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	client := helloworld.NewGoMicroClient(cc)
@@ -38,6 +39,7 @@ func main() {
 	ctx := metadata.NewOutgoingContext(context.Background(), headers)
 	for {
 		forRequest(ctx, client)
+		//break
 		time.Sleep(50 * time.Millisecond)
 	}
 
