@@ -114,14 +114,19 @@ func (p *p2cPicker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 func (p *p2cPicker) buildDoneFunc(c *subConn) func(info balancer.DoneInfo) {
 	start := int64(time.Since(initTime))
 	return func(info balancer.DoneInfo) {
+		// 正在处理的请求数减 1
 		atomic.AddInt64(&c.inflight, -1)
 		now := time.Since(initTime)
+		// 保存本次请求结束时的时间点，并取出上次请求时的时间点
 		last := atomic.SwapInt64(&c.last, int64(now))
 		td := int64(now) - last
 		if td < 0 {
 			td = 0
 		}
+
+		// 用牛顿冷却定律中的衰减函数模型计算EWMA算法中的β值
 		w := math.Exp(float64(-td) / float64(decayTime))
+		// 保存本次请求的耗时
 		lag := int64(now) - start
 		if lag < 0 {
 			lag = 0
@@ -174,20 +179,19 @@ func (p *p2cPicker) logStats() {
 	defer p.lock.Unlock()
 
 	for _, conn := range p.conns {
-		stats = append(stats, fmt.Sprintf("conn: %s, load: %d, reqs: %d",
-			conn.addr.Addr, conn.load(), atomic.SwapInt64(&conn.requests, 0)))
+		stats = append(stats, fmt.Sprintf("conn: %s, load: %d, reqs: %d", conn.addr.Addr, conn.load(), atomic.SwapInt64(&conn.requests, 0)))
 	}
 
 	fmt.Sprintf("p2c - %s", strings.Join(stats, "; "))
 }
 
 type subConn struct {
-	lag      uint64
-	inflight int64
-	success  uint64
-	requests int64
-	last     int64
-	pick     int64
+	lag      uint64 // 用来保存 ewma 值
+	inflight int64  // 用在保存当前节点正在处理的请求总数
+	success  uint64 // 用来标识一段时间内此连接的健康状态
+	requests int64  // 用来保存请求总数
+	last     int64  // 用来保存上一次请求耗时, 用于计算 ewma 值
+	pick     int64  // 保存上一次被选中的时间点
 	addr     resolver.Address
 	conn     balancer.SubConn
 }
@@ -196,6 +200,7 @@ func (c *subConn) healthy() bool {
 	return atomic.LoadUint64(&c.success) > throttleSuccess
 }
 
+// load = ewma * inflight;
 func (c *subConn) load() int64 {
 	// plus one to avoid multiply zero
 	lag := int64(math.Sqrt(float64(atomic.LoadUint64(&c.lag) + 1)))

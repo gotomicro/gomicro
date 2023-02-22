@@ -23,9 +23,9 @@ const (
 // Node is endpoint instance
 type Node struct {
 	subConn   balancer.SubConn
-	lag       int64
-	success   uint64
-	inflight  int64
+	lag       int64  // 用来保存 ewma 值
+	success   uint64 // 用来标识一段时间内此连接的健康状态
+	inflight  int64  // 用在保存当前节点正在处理的请求总数
 	inflights *list.List
 	stamp     int64
 	predictTs int64
